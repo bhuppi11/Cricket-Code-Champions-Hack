@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Commentary Translater</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+  <style>
+            body, div, h3, h4, h5, h6, p {
+            margin: 0;
+            padding: 0;
+        }
+        #header{
+            display: flex;
+            align-items: center;
+            background-color: rgba(49,0,114,255);
+            height: 100px;
+        }
+        #header img {
+            margin-right: 10px;
+            height: 100px;
+            position: fixed;
+        }
+        #header h1 {
+            flex: 1;
+            text-align: center;
+            color: white;
+        }
+        
+        #buttons-container {
+        display: flex;
+        justify-content: center;
+        margin-top: 20px;
+        }
+
+        button {
+        border: none;
+        background-color: white;
+        margin: 0 30px;
+        position: relative;
+        transition: transform 0.3s;
+        }
+
+        button:hover {
+        transform: scale(1.1);
+        cursor: pointer;
+        }
+
+        #logo {
+        width: 40px;
+        height: 40px;
+        }
+
+        #tooltip {
+        position: absolute;
+        text-align: center;
+        width: 100px;
+        color: black;
+        margin-top: 50px;
+        left: 50%;
+        transform: translateX(-50%);
+        transition: opacity 0.3s;
+        }
+
+
+        .row {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            margin: 20px 0;
+        }
+
+        .checkbox-row {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            width: 36%;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        textarea {
+            resize: none;
+        }
+
+        .text-field {
+        width: 40%;
+        height: 150px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        padding: 10px;
+        font-size: 16px;
+        overflow: auto;
+        }
+
+
+        .dropdown {
+            width: 30%;
+            height: 40px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            padding: 10px;
+            font-size: 16px;
+        }
+
+        #speech-container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 45px;
+        }
+
+        #convertedSpeech {
+            width: 26%;
+            margin-left: 50px;
+        }
+
+        #audioPlayer {
+            width: 80%;
+            margin-right: 50px;
+        }
+
+
+        @keyframes pulse {
+        0% {
+            transform: scale(1);
+        }
+        50% {
+            transform: scale(1.1);
+        }
+        100% {
+            transform: scale(1);
+        }
+        }
+
+        .pulsate {
+        animation: pulse 1s infinite;
+        }
+
+        .error input[type=checkbox] {
+        outline: 2px solid #c00;
+        }
+
+        
+  </style>
+  <link rel="icon" href="./worldcup.jpg">
+</head>
+<body>
+    <div id="header">
+        <img src="./worldcup.jpg" alt="Image" />
+        <h1>Cricket language translater</h1>
+    </div>
+
+    <div class="row">
+        <select class="dropdown" id="inputLanguageDropdown">
+            <option value="" disabled selected>Input language</option>
+            <option value="en">English</option>
+            <option value="fr">French</option>
+            <option value="de">German</option>
+            <option value="hi">Hindi</option>
+            <option value="ja">Japanese</option>
+            <option value="ru">Russian</option>
+        </select>
+        <select class="dropdown" id="outputLanguageDropdown">
+            <option value="" disabled selected>Output language</option>
+            <option value="en">English</option>
+            <option value="fr">French</option>
+            <option value="de">German</option>
+            <option value="hi">Hindi</option>
+            <option value="ja">Japanese</option>
+            <option value="ru">Russian</option>
+        </select>
+        <select class="dropdown" id="outputGenderDropdown">
+            <option value="" disabled selected>Output Voice Gender</option>
+            <option value="male">Male</option>
+            <option value="female">Female</option>
+        </select>
+    </div>
+
+    <div class="checkbox-row">
+        <div id="lineByLineCheckboxDiv">
+            <input type="checkbox" id="lineByLineCheckbox" name="lineByLineCheckbox" onclick="handleCheckboxClick('lineByLine')">
+            <label id="lineByLineLabel" for="lineByLineCheckbox">Listen Line by Line Commentary</label>
+        </div>
+
+        <div id="completeCommentaryCheckboxDiv">
+            <input type="checkbox" id="completeCommentaryCheckbox" name="completeCommentaryCheckbox" onclick="handleCheckboxClick('completeCommentary')">
+            <label id="completeCommentaryLabel" for="completeCommentaryCheckbox">Listen Complete Commentary at Once</label>
+        </div>
+           
+
+    </div>
+
+    <div id="buttons-container">
+        <button id="startButton" onclick="convertToSpeech()">
+          <img id="logo" src="./microphone.png" alt="Start Commentary" />
+          <span class="startButtonClass" id="tooltip">Start Recording</span>
+        </button>
+        
+        <button onclick="stopRecording()">
+          <img id="logo" src="./stop.png" alt="Stop Commentary" />
+          <span id="tooltip">Stop Recording</span>
+        </button>
+    </div>
+
+    <div id="speech-container">
+        <h2 id="convertedSpeech">Listen Translated Commentary</h2>
+        <audio controls id="audioPlayer">
+          <source id="audioSource" type="audio/mpeg">
+          Your browser does not support the audio element.
+        </audio>
+    </div>
+      
+
+    <div class="row">
+        <h2>Input Commentary</h2>
+        <h2>Output Commentary</h2>
+    </div>
+
+    <div class="row">
+        <textarea class="text-field" id="inputTextField" placeholder="Input speech in text form" readonly></textarea>
+        <textarea class="text-field" id="outputTextField" placeholder="Converted speech in text form" readonly></textarea>
+    </div>
+
+
+
+  <script src="https://sdk.amazonaws.com/js/aws-sdk-2.1015.0.min.js"></script>
+
+  
+  <script>
+    console.log("staring...");
+      AWS.config.update({
+      region: 'us-east-1',
+      credentials: new AWS.Credentials('YOUR_ACCESS_KEY', 'YOUR_SECRET_KEY') 
+    });
+
+    // Create an instance of the Lambda service
+    const lambda = new AWS.Lambda();
+
+    let chunks = [];
+    let mediaRecorder;
+    let recordedBlob;
+    let recognition = new webkitSpeechRecognition(); // For Chrome
+    let isRecognitionStarted = false;
+    let selectedCheckbox = null;
+    recognition.lang = getLangCode(document.getElementById('inputLanguageDropdown').value);
+    recognition.continuous = true;
+    recognition.interimResults = false;
+
+    recognition.onresult = function(event) {
+      let finalTranscript = '';
+      for (let i = event.resultIndex; i < event.results.length; ++i) {
+        if (event.results[i].isFinal) {
+          finalTranscript += event.results[i][0].transcript;
+        }
+      }
+
+
+      var currentInputText =  document.getElementById('inputTextField').value;
+      if (currentInputText != '')
+        document.getElementById('inputTextField').innerHTML = currentInputText + '. ' + finalTranscript;
+      else
+        document.getElementById('inputTextField').innerHTML = finalTranscript;
+
+        if (document.getElementById('completeCommentaryCheckbox').checked)
+            return;
+
+      callLambdaFunction(finalTranscript);
+    };
+
+    function convertToSpeech() {
+        document.getElementById("lineByLineCheckboxDiv").classList.remove("error");
+        document.getElementById("completeCommentaryCheckboxDiv").classList.remove("error");
+
+        const inputLanguage = document.getElementById('inputLanguageDropdown').value;
+        const outputLanguage = document.getElementById('outputLanguageDropdown').value;
+        const outputGender = document.getElementById('outputGenderDropdown').value;
+        const lineByLineCheckbox = document.getElementById('lineByLineCheckbox').checked;
+        const completeCommentaryCheckbox = document.getElementById('completeCommentaryCheckbox').checked;
+
+        let isError = false;
+        if (!inputLanguage) {
+            document.getElementById('inputLanguageDropdown').style.borderColor = 'red';
+            isError = true;
+        } else {
+            document.getElementById('inputLanguageDropdown').style.borderColor = 'green';
+        }
+
+        if (!outputLanguage) {
+            document.getElementById('outputLanguageDropdown').style.borderColor = 'red';
+            isError = true;
+        } else {
+            document.getElementById('outputLanguageDropdown').style.borderColor = 'green';
+        }
+
+        if (!outputGender) {
+            document.getElementById('outputGenderDropdown').style.borderColor = 'red';
+            isError = true;
+        } else {
+            document.getElementById('outputGenderDropdown').style.borderColor = 'green';
+        }
+
+        if (!(lineByLineCheckbox || completeCommentaryCheckbox)) {
+            isError = true;
+            console.log("executed...")
+            document.getElementById("lineByLineCheckboxDiv").classList.add("error");
+            document.getElementById("completeCommentaryCheckboxDiv").classList.add("error");
+        }
+        
+
+        if (isError) {
+            setTimeout(function() {
+            alert('Please fill in all the required fields.');
+            }, 100);
+            return;
+        }
+        
+      if (!isRecognitionStarted) {
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+          console.log('getUserMedia is not supported in this browser.');
+          return;
+        }
+        navigator.mediaDevices.getUserMedia({ audio: true })
+          .then(function(stream) {
+            recognition.start();
+            startRecording(stream);
+            isRecognitionStarted = true;
+          })
+          .catch(function(err) {
+            console.log('The following getUserMedia error occurred: ' + err);
+          });
+      }
+    }
+
+    function startRecording(stream) {
+
+        const startButton = document.getElementById('startButton');
+        startButton.classList.add('pulsate');
+
+        let elements = document.getElementsByClassName("startButtonClass");
+        for (let i = 0; i < elements.length; i++) {
+            elements[i].innerHTML = 'Recording In Progress';
+        }
+
+      chunks = [];
+      mediaRecorder = new MediaRecorder(stream);
+      mediaRecorder.ondataavailable = function(e) {
+        chunks.push(e.data);
+      };
+      mediaRecorder.onstop = function() {
+        recordedBlob = new Blob(chunks, { 'type' : 'audio/ogg; codecs=opus' });
+      };
+      mediaRecorder.start();
+    }
+
+    function stopRecording() {
+
+        if (document.getElementById('completeCommentaryCheckbox').checked) {
+            callLambdaFunction(document.getElementById('inputTextField').innerHTML);
+        }
+
+        let elements = document.getElementsByClassName("startButtonClass");
+        for (let i = 0; i < elements.length; i++) {
+            elements[i].innerHTML = 'Start Recording';
+        }
+
+
+        const startButton = document.getElementById('startButton');
+        startButton.classList.remove('pulsate');
+      if (isRecognitionStarted) {
+        mediaRecorder.stop();
+        recognition.stop();
+        isRecognitionStarted = false;
+      }
+    }
+
+
+    function callLambdaFunction(input) {
+
+        var person;
+        var outputGender = document.getElementById('outputGenderDropdown').value;
+        if (outputGender === 'male')
+            person = "Matthew";
+        else
+            person = "Joanna";
+        const lambdaInput = {
+            input: input,
+            inputLanguage: document.getElementById('inputLanguageDropdown').value,
+            outputLanguage: document.getElementById('outputLanguageDropdown').value,
+            outputPerson: person
+        };
+
+        console.log("lambda executing with this input = "+lambdaInput.input);
+
+        
+        const lambdaParams = {
+            FunctionName: 'Cricket-language-translation',
+            InvocationType: 'RequestResponse',
+            LogType: 'Tail',
+            Payload: JSON.stringify({ input: lambdaInput })
+        };
+
+
+    lambda.invoke(lambdaParams, function(err, data) {
+          if (err) {
+              console.error(err, err.stack);
+          } else {
+                const result = JSON.parse(data.Payload);
+                var currentOutputText =  document.getElementById('outputTextField').value;
+                if (currentOutputText != '' && result.translatedText != undefined && result.translatedText.TranslatedText != undefined)
+                    document.getElementById('outputTextField').innerHTML = currentOutputText + '. ' + result.translatedText.TranslatedText;
+                else if (result.translatedText != undefined && result.translatedText.TranslatedText != undefined)
+                    document.getElementById('outputTextField').innerHTML = result.translatedText.TranslatedText;
+                if (result && result.sentiment) {
+                    
+                    if (result.speech && result.speech.AudioStream && result.speech.AudioStream.data) {
+
+                        console.log("if executed");
+                        const audioData = new Uint8Array(result.speech.AudioStream.data);
+                        const blob = new Blob([audioData], { type: 'audio/mpeg' });
+                        const audioUrl = URL.createObjectURL(blob);
+                        const audioPlayer = document.getElementById('audioPlayer');
+                        audioPlayer.src = audioUrl;
+                        audioPlayer.type = 'audio/mpeg'; // Set the appropriate type if necessary
+
+                        // Handle errors
+                        audioPlayer.onerror = function (e) {
+                            console.error('Error occurred while playing the audio:', e);
+                        };
+                    }
+                }
+          }
+      });
+    }
+    
+    function getLangCode(langCode) {
+        if(langCode === 'en')
+            return 'en-GB';
+        else if(langCode === 'fr')
+            return 'fr-BE';
+        else if(langCode === 'de')
+            return 'de-DE';
+        else if(langCode === 'hi')
+            return 'hi-IN';
+        else if(langCode === 'ja')
+            return 'ja-JP';
+        else if(langCode === 'ru')
+            return 'ru-RU';
+    }
+
+    function handleCheckboxClick(checkboxType) {
+        if (selectedCheckbox === checkboxType) return;
+
+        if (checkboxType === 'lineByLine') {
+            document.getElementById('completeCommentaryCheckbox').checked = false;
+            selectedCheckbox = 'lineByLine';
+        } else if (checkboxType === 'completeCommentary') {
+            document.getElementById('lineByLineCheckbox').checked = false;
+            selectedCheckbox = 'completeCommentary';
+        }
+    }
+</script>
+</body>
+</html>
